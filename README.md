@@ -4,7 +4,7 @@
 - [Boost ASIO based IRC Client](https://github.com/KrzaQ/boost-asio-irc-client)
 
 ## Requirements
-- Boost (Asio, SSL, JSON, Regex)
+- Boost (Asio, SSL, JSON)
 - OpenSSL
 - SQLite3
 

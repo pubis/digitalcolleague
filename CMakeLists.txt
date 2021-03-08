@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.15)
 
 project(DigitalColleague LANGUAGES CXX)
 
-find_package(Boost COMPONENTS system thread regex json REQUIRED)
+find_package(Boost COMPONENTS system thread json REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(SQLite3 REQUIRED)
 
@@ -12,7 +12,7 @@ target_compile_features(digitalcolleague PRIVATE cxx_std_17)
 
 target_link_libraries(digitalcolleague
   PRIVATE OpenSSL::SSL
-          Boost::boost Boost::system Boost::thread Boost::regex Boost::json
+          Boost::boost Boost::system Boost::thread Boost::json
           SQLite::SQLite3
 )
 
