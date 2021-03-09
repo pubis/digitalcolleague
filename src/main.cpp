@@ -97,12 +97,6 @@ int main(int argc, char* argv[]) {
     }
   });
 
-  /*
-  irc.register_handler("JOIN", [&](auto&&... views) {
-    greet(irc, views...);
-  });
-  */
-
   irc.register_handler("PRIVMSG",
     [&](auto&& who, auto&& where, auto&& message) {
       std::string nick;

@@ -106,8 +106,6 @@ void client::on_hostname_resolved(const boost::system::error_code& error, tcp::r
         on_connected(error);
       }
   );
-
-  //socket.async_connect(*results, handler);
 }
 
 void client::on_connected(const boost::system::error_code& error) {
