@@ -110,6 +110,7 @@ void client::on_hostname_resolved(const boost::system::error_code& error, tcp::r
 
 void client::on_connected(const boost::system::error_code& error) {
   if (error) {
+    std::cerr << "[IRC] Connect error: " << error.message() << '\n';
     connect();
     return;
   }
@@ -125,7 +126,7 @@ void client::on_connected(const boost::system::error_code& error) {
 
 void client::on_handshake(const boost::system::error_code& error) {
   if (error) {
-    std::cerr << "Handshake failed: " << error.message() << '\n';
+    std::cerr << "[IRC] Handshake failed: " << error.message() << '\n';
     connect();
     return;
   }
@@ -147,6 +148,7 @@ bool client::verify_certificate(bool preverified, ssl::verify_context& ctx) {
 void client::await_new_line() {
   auto handler = [this](const auto& error, std::size_t s) {
     if (error) {
+      std::cerr << "[IRC] Read error: " << error.message() << '\n';
       connect();
       return;
     }
@@ -195,7 +197,7 @@ void client::send_raw() {
 
 void client::handle_write(const boost::system::error_code& error, std::size_t bytes_read) {
   if (error) {
-    std::cerr << "Error: " << error << '\n';
+    std::cerr << "[IRC] Write error: " << error << '\n';
     return;
   }
 
