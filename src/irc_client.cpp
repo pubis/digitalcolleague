@@ -10,6 +10,7 @@ namespace irc {
 settings tag_invoke(json::value_to_tag<settings>, const json::value& jv) {
   settings s;
   const json::object& obj = jv.as_object();
+  extract(obj, s.enabled, "enabled");
   extract(obj, s.host, "host");
   extract(obj, s.port, "port");
   extract(obj, s.nick, "nick");
@@ -37,7 +38,8 @@ client::client(asio::io_context& io, ssl::context& ctx, const irc::settings& set
     }
   );
 
-  connect();
+  if (settings.enabled)
+    connect();
 }
 
 void client::join(std::string_view channel) {

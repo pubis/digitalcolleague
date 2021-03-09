@@ -54,6 +54,7 @@ namespace ssl  = boost::asio::ssl;
 namespace json = boost::json;
 
 struct settings {
+  bool enabled;
   std::string host;
   int port;
   std::string nick;

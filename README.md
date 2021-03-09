@@ -12,6 +12,7 @@
 ```json
 {
   "twitch": {
+    "enabled": true,
     "host": "irc.chat.twitch.tv",
     "port": 6697,
     "nick": "botname",
