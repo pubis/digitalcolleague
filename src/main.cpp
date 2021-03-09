@@ -70,7 +70,7 @@ int main(int argc, char* argv[]) {
     return EXIT_FAILURE;
   }
 
-  irc::settings settings{ json::value_to<irc::settings>(secret) };
+  irc::settings settings{ json::value_to<irc::settings>(secret.at("twitch")) };
 
   std::cout << "SQLite threadsafe: " << sqlite3_threadsafe() << '\n';
   sqlite3 *db{ nullptr };

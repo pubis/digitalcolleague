@@ -11,11 +11,13 @@
 ## Config
 ```json
 {
-  "host": "irc.chat.twitch.tv",
-  "port": 6697,
-  "nick": "botname",
-  "pass": "oauth:oauth_token",
-  "channels": [ "#somechannel" ]
+  "twitch": {
+    "host": "irc.chat.twitch.tv",
+    "port": 6697,
+    "nick": "botname",
+    "pass": "oauth:oauth_token",
+    "channels": [ "#somechannel" ]
+  }
 }
 ```
 
