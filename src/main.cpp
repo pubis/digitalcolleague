@@ -12,6 +12,7 @@
 #include <sqlite3.h>
 
 #include "irc_client.hpp"
+#include "console.hpp"
 
 namespace asio = boost::asio;
 namespace json = boost::json;
@@ -85,10 +86,10 @@ int main(int argc, char* argv[]) {
 
   using boost::asio::ip::tcp;
 
-  asio::ssl::context ctx{ asio::ssl::context::tls };
-  ctx.set_default_verify_paths();
+  asio::ssl::context ssl_ctx{ asio::ssl::context::tls };
+  ssl_ctx.set_default_verify_paths();
 
-  irc::client irc{ io, ctx, settings };
+  irc::client irc{ io, ssl_ctx, settings };
 
   irc.register_handler("001", [&](auto&&...) {
     for (const auto& channel: settings.channels) {
@@ -134,6 +135,8 @@ int main(int argc, char* argv[]) {
   );
 
   std::signal(SIGINT, signal_handler);
+
+  dc::tcp_server console{ io };
 
   io.run();
 
