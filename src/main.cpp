@@ -130,7 +130,7 @@ int main(int argc, char* argv[]) {
 
   std::signal(SIGINT, signal_handler);
 
-  dc::tcp_server console{ io };
+  dc::tcp_server console{ io, json::value_to<dc::settings>(secret.at("console")) };
 
   io.run();
 

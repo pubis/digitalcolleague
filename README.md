@@ -18,6 +18,10 @@
     "nick": "botname",
     "pass": "oauth:oauth_token",
     "channels": [ "#somechannel" ]
+  },
+  "console": {
+    "enabled": true,
+    "port": 6969
   }
 }
 ```

@@ -5,10 +5,24 @@
 
 #include <boost/asio.hpp>
 #include <boost/bind/bind.hpp>
+#include <boost/json.hpp>
 
 namespace dc {
 
 namespace asio = boost::asio;
+namespace json = boost::json;
+
+struct settings {
+  bool enabled;
+  int port;
+};
+
+template <class T>
+void extract(const json::object& obj, T& t, json::string_view key) {
+  t = json::value_to<T>(obj.at(key));
+}
+
+settings tag_invoke(json::value_to_tag<settings>, const json::value& jv);
 
 using boost::asio::ip::tcp;
 
@@ -35,10 +49,11 @@ public:
 
 class tcp_server {
   asio::io_context& ctx;
+  settings settings_;
   tcp::acceptor acceptor;
 
 public:
-  tcp_server(asio::io_context& ctx);
+  tcp_server(asio::io_context& ctx, const settings& settings);
 
 private:
   void start_accept();

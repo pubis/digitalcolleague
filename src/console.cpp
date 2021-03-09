@@ -2,6 +2,14 @@
 
 namespace dc {
 
+settings tag_invoke(json::value_to_tag<settings>, const json::value& jv) {
+  settings s;
+  const json::object& obj = jv.as_object();
+  extract(obj, s.enabled, "enabled");
+  extract(obj, s.port, "port");
+  return s;
+}
+
 using boost::asio::ip::tcp;
 
 tcp_connection::tcp_connection(tcp::socket socket)
@@ -75,11 +83,13 @@ void tcp_connection::start() {
   await_command();
 }
 
-tcp_server::tcp_server(asio::io_context& ctx)
+tcp_server::tcp_server(asio::io_context& ctx, const settings& settings)
   : ctx(ctx)
-  , acceptor(ctx, tcp::endpoint(tcp::v4(), 6969))
+  , settings_(settings)
+  , acceptor(ctx, tcp::endpoint(tcp::v4(), settings_.port))
 {
-  start_accept();
+  if (settings_.enabled)
+    start_accept();
 }
 
 void tcp_server::start_accept() {
@@ -87,13 +97,13 @@ void tcp_server::start_accept() {
       [this](const boost::system::error_code& error, tcp::socket socket) {
         if (!error) {
           std::make_shared<tcp_connection>(std::move(socket))->start();
-        } else {
-          start_accept();
         }
+
+        start_accept();
       }
   );
 
-  std::cout << "Console accepting connections on port 6969\n";
+  std::cout << "[Console] Accepting connections on port " << settings_.port << '\n';
 }
 
 void tcp_server::handle_accept(tcp_connection::pointer connection, const boost::system::error_code& error) {
