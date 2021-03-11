@@ -347,11 +347,17 @@ void session::request(http::verb method, const std::string& endpoint, const json
   stream.handshake(ssl::stream_base::client);
 
   target += endpoint;
-  http::request<http::string_body> request{ http::verb::get, target, 11 };
+  std::string data = json::serialize(payload);
+
+  std::cout << "[Discord] Request target: " << target << ", data: " << data << '\n';
+
+  http::request<http::string_body> request{ method, target, 11 };
   request.set(http::field::host, host);
   request.set(http::field::user_agent, "DiscordBot (https://github.com/pubis, 0.1)");
   request.set(http::field::authorization, "Bot " + settings_.token);
-  request.body() = json::serialize(payload);
+  request.set(http::field::content_type, "application/json");
+  request.body() = data;
+  request.set(http::field::content_length, std::to_string(data.length()));
 
   http::write(stream, request);
 
@@ -370,8 +376,9 @@ void session::request(http::verb method, const std::string& endpoint, const json
   if (ec == asio::error::eof || ec == ssl::error::stream_truncated) {
     ec = {};
   }
-  if (ec)
-    throw beast::system_error(ec);
+  if (ec) {
+    std::cerr << "[Discord] Request failed: " << ec.message() << '\n';
+  }
 }
 
 void session::get_gateway() {
