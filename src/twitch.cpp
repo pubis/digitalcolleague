@@ -1,11 +1,11 @@
-#include "irc_client.hpp"
+#include "twitch.hpp"
 
 using std::placeholders::_1;
 using std::placeholders::_2;
 
 namespace dc {
 
-namespace irc {
+namespace twitch {
 
 settings tag_invoke(json::value_to_tag<settings>, const json::value& jv) {
   settings s;
@@ -19,10 +19,10 @@ settings tag_invoke(json::value_to_tag<settings>, const json::value& jv) {
   return s;
 }
 
-client::client(asio::io_context& io, ssl::context& ctx, const irc::settings& settings)
+client::client(asio::io_context& io, ssl::context& ctx, const settings& settings)
   : io(io)
   , ctx(ctx)
-  , settings(settings)
+  , settings_(settings)
   , socket(io, ctx)
 {
   socket.set_verify_mode(ssl::verify_peer);
@@ -38,7 +38,7 @@ client::client(asio::io_context& io, ssl::context& ctx, const irc::settings& set
     }
   );
 
-  if (settings.enabled)
+  if (settings_.enabled)
     connect();
 }
 
@@ -76,17 +76,17 @@ void client::connect() {
     on_hostname_resolved(std::forward<decltype(params)>(params)...);
   };
 
-  resolver.async_resolve(settings.host, std::to_string(settings.port), handler);
+  resolver.async_resolve(settings_.host, std::to_string(settings_.port), handler);
 }
 
 void client::identify() {
   std::stringstream msg;
-  msg << "PASS " << settings.pass;
+  msg << "PASS " << settings_.pass;
   send_line(msg.str());
   std::cout << "> PASS ********\n";
 
   msg.str("");
-  msg << "NICK " << settings.nick;
+  msg << "NICK " << settings_.nick;
   send_line(msg.str());
   std::cout << "> " << msg.str() << '\n';
 }
@@ -99,7 +99,7 @@ void client::on_hostname_resolved(const boost::system::error_code& error, tcp::r
 
   if (!results.size()) {
     std::stringstream msg;
-    msg << "Failed to resolve '" << settings.host << "'";
+    msg << "Failed to resolve '" << settings_.host << "'";
     throw std::runtime_error(msg.str());
   }
 
@@ -112,7 +112,7 @@ void client::on_hostname_resolved(const boost::system::error_code& error, tcp::r
 
 void client::on_connected(const boost::system::error_code& error) {
   if (error) {
-    std::cerr << "[IRC] Connect error: " << error.message() << '\n';
+    std::cerr << "[Twitch] Connect error: " << error.message() << '\n';
     connect();
     return;
   }
@@ -128,7 +128,7 @@ void client::on_connected(const boost::system::error_code& error) {
 
 void client::on_handshake(const boost::system::error_code& error) {
   if (error) {
-    std::cerr << "[IRC] Handshake failed: " << error.message() << '\n';
+    std::cerr << "[Twitch] Handshake failed: " << error.message() << '\n';
     connect();
     return;
   }
@@ -150,7 +150,7 @@ bool client::verify_certificate(bool preverified, ssl::verify_context& ctx) {
 void client::await_new_line() {
   auto handler = [this](const auto& error, std::size_t s) {
     if (error) {
-      std::cerr << "[IRC] Read error: " << error.message() << '\n';
+      std::cerr << "[Twitch] Read error: " << error.message() << '\n';
       connect();
       return;
     }
@@ -199,7 +199,7 @@ void client::send_raw() {
 
 void client::handle_write(const boost::system::error_code& error, std::size_t bytes_read) {
   if (error) {
-    std::cerr << "[IRC] Write error: " << error << '\n';
+    std::cerr << "[Twitch] Write error: " << error << '\n';
     return;
   }
 
@@ -215,6 +215,6 @@ void client::handle_write(const boost::system::error_code& error, std::size_t by
     send_raw();
 }
 
-} // namespace irc
+} // namespace twitch
 
 } // namespace dc

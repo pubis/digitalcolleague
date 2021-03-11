@@ -7,7 +7,7 @@ find_package(OpenSSL REQUIRED)
 find_package(SQLite3 REQUIRED)
 
 add_executable(digitalcolleague src/main.cpp
-  src/irc_client.hpp src/irc_client.cpp
+  src/twitch.hpp src/twitch.cpp
   src/discord.hpp
   src/console.hpp src/console.cpp)
 

@@ -36,7 +36,7 @@ void extract_regex_groups(const char* string, const std::regex& regex, Tuple&& t
 
 namespace dc {
 
-namespace irc {
+namespace twitch {
 
 struct settings {
   bool enabled;
@@ -59,7 +59,7 @@ public:
 private:
   asio::io_context& io;
   ssl::context& ctx;
-  irc::settings settings;
+  settings settings_;
   //tcp::socket socket;
   ssl_socket socket;
   asio::streambuf in_buf;
@@ -67,7 +67,7 @@ private:
   std::deque<std::string> to_write;
 
 public:
-  client(asio::io_context& io, ssl::context& ctx, const irc::settings& settings);
+  client(asio::io_context& io, ssl::context& ctx, const settings& settings);
 
   void join(std::string_view channel);
   void say(std::string_view receiver, std::string_view message);
@@ -75,7 +75,7 @@ public:
   void send_line(std::string data);
   void register_handler(std::string name, message_handler handler);
 
-  const auto& get_settings() const { return settings; }
+  const auto& get_settings() const { return settings_; }
 
 private:
   void connect();
@@ -92,6 +92,6 @@ private:
   void handle_write(const boost::system::error_code& error, std::size_t bytes_read);
 };
 
-} // namespace irc
+} // namespace twitch
 
 } // namespace dc

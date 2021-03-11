@@ -7,7 +7,7 @@
 
 #include <sqlite3.h>
 
-#include "irc_client.hpp"
+#include "twitch.hpp"
 #include "discord.hpp"
 #include "console.hpp"
 
@@ -37,7 +37,7 @@ json::value read_json_file(const char* file, boost::system::error_code& error) {
   return p.release();
 }
 
-void greet(irc::client& client, std::string_view who, std::string_view where, std::string_view message) {
+void greet(twitch::client& client, std::string_view who, std::string_view where, std::string_view message) {
   std::string nick;
 
   extract_regex_groups(who.data(), std::regex{ "([^!:]+)" }, std::tie(nick));
@@ -67,7 +67,7 @@ int main(int argc, char* argv[]) {
     return EXIT_FAILURE;
   }
 
-  irc::settings settings{ json::value_to<irc::settings>(secret.at("twitch")) };
+  twitch::settings settings{ json::value_to<twitch::settings>(secret.at("twitch")) };
 
   std::cout << "SQLite threadsafe: " << sqlite3_threadsafe() << '\n';
   sqlite3 *db{ nullptr };
@@ -85,15 +85,15 @@ int main(int argc, char* argv[]) {
   asio::ssl::context ssl_ctx{ asio::ssl::context::tls };
   ssl_ctx.set_default_verify_paths();
 
-  irc::client irc{ io, ssl_ctx, settings };
+  twitch::client twitch{ io, ssl_ctx, settings };
 
-  irc.register_handler("001", [&](auto&&...) {
+  twitch.register_handler("001", [&](auto&&...) {
     for (const auto& channel: settings.channels) {
-      irc.join(channel);
+      twitch.join(channel);
     }
   });
 
-  irc.register_handler("PRIVMSG",
+  twitch.register_handler("PRIVMSG",
     [&](auto&& who, auto&& where, auto&& message) {
       std::string nick;
       extract_regex_groups(who.data(), std::regex{ "([^!:]+)" }, std::tie(nick));
