@@ -1,27 +1,8 @@
-#include <functional>
-#include <iostream>
-#include <memory>
-#include <string>
-
-#include <boost/asio/strand.hpp>
-#include <boost/beast/core.hpp>
-#include <boost/beast/ssl.hpp>
-#include <boost/beast/websocket.hpp>
-#include <boost/beast/websocket/ssl.hpp>
-#include <boost/json.hpp>
+#include "common.hpp"
 
 namespace dc {
 
 namespace discord {
-
-namespace json  = boost::json;
-namespace asio  = boost::asio;
-namespace beast = boost::beast;
-namespace http  = beast::http;
-namespace ssl   = asio::ssl;
-namespace ws    = beast::websocket;
-
-using tcp = asio::ip::tcp;
 
 struct settings {
   bool enabled;

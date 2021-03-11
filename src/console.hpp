@@ -1,16 +1,8 @@
-#include <deque>
-#include <iostream>
-#include <memory>
-#include <string>
+#pragma once
 
-#include <boost/asio.hpp>
-#include <boost/bind/bind.hpp>
-#include <boost/json.hpp>
+#include "common.hpp"
 
 namespace dc {
-
-namespace asio = boost::asio;
-namespace json = boost::json;
 
 struct settings {
   bool enabled;

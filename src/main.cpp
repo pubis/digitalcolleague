@@ -1,13 +1,9 @@
-#include <chrono>
 #include <cstdlib>
 #include <csignal>
 #include <fstream>
 #include <iomanip>
-#include <iostream>
 
 #include <boost/algorithm/string/trim.hpp>
-#include <boost/asio.hpp>
-#include <boost/json.hpp>
 
 #include <sqlite3.h>
 
@@ -15,8 +11,7 @@
 #include "discord.hpp"
 #include "console.hpp"
 
-namespace asio = boost::asio;
-namespace json = boost::json;
+using namespace dc;
 
 asio::io_context io;
 
@@ -131,15 +126,15 @@ int main(int argc, char* argv[]) {
 
   std::signal(SIGINT, signal_handler);
 
-  dc::tcp_server console{ io, json::value_to<dc::settings>(secret.at("console")) };
+  tcp_server console{ io, json::value_to<dc::settings>(secret.at("console")) };
 
   asio::ssl::context ssl_ctx_discord{ asio::ssl::context::tlsv12_client };
   ssl_ctx_discord.set_default_verify_paths();
   ssl_ctx_discord.set_verify_mode(asio::ssl::verify_peer);
 
-  std::make_shared<dc::discord::session>(
+  std::make_shared<discord::session>(
       io, ssl_ctx_discord,
-      json::value_to<dc::discord::settings>(secret.at("discord"))
+      json::value_to<discord::settings>(secret.at("discord"))
   )->run();
 
   io.run();

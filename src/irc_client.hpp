@@ -1,19 +1,6 @@
 #pragma once
 
-#include <deque>
-#include <functional>
-#include <regex>
-#include <stdexcept>
-#include <string>
-#include <string_view>
-#include <tuple>
-#include <type_traits>
-#include <unordered_map>
-
-#include <boost/asio.hpp>
-#include <boost/asio/ssl.hpp>
-#include <boost/json.hpp>
-#include <boost/lexical_cast.hpp>
+#include "common.hpp"
 
 namespace detail {
 
@@ -47,11 +34,9 @@ void extract_regex_groups(const char* string, const std::regex& regex, Tuple&& t
   detail::assign_regex_matches(std::forward<Tuple>(tuple), match, std::make_index_sequence<size>{});
 }
 
-namespace irc {
+namespace dc {
 
-namespace asio = boost::asio;
-namespace ssl  = boost::asio::ssl;
-namespace json = boost::json;
+namespace irc {
 
 struct settings {
   bool enabled;
@@ -112,5 +97,6 @@ private:
   void handle_write(const boost::system::error_code& error, std::size_t bytes_read);
 };
 
-}
+} // namespace irc
 
+} // namespace dc

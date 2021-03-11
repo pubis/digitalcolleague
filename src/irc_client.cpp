@@ -1,9 +1,9 @@
 #include "irc_client.hpp"
 
-#include <iostream>
-
 using std::placeholders::_1;
 using std::placeholders::_2;
+
+namespace dc {
 
 namespace irc {
 
@@ -215,5 +215,6 @@ void client::handle_write(const boost::system::error_code& error, std::size_t by
     send_raw();
 }
 
-}
+} // namespace irc
 
+} // namespace dc
