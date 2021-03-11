@@ -15,7 +15,7 @@ settings tag_invoke(json::value_to_tag<settings>, const json::value& jv);
 
 using boost::asio::ip::tcp;
 
-class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
+class connection : public std::enable_shared_from_this<connection> {
   tcp::socket socket_;
   asio::streambuf buffer_;
   std::deque<std::string> write_queue;
@@ -29,25 +29,25 @@ class tcp_connection : public std::enable_shared_from_this<tcp_connection> {
   void await_command();
 
 public:
-  using pointer = std::shared_ptr<tcp_connection>;
+  using pointer = std::shared_ptr<connection>;
 
-  tcp_connection(tcp::socket socket);
+  connection(tcp::socket socket);
 
   void start();
 };
 
-class tcp_server {
+class server {
   asio::io_context& ctx;
   settings settings_;
   tcp::acceptor acceptor;
 
 public:
-  tcp_server(asio::io_context& ctx, const settings& settings);
+  server(asio::io_context& ctx, const settings& settings);
 
 private:
   void start_accept();
 
-  void handle_accept(tcp_connection::pointer connection, const boost::system::error_code& error);
+  void handle_accept(connection::pointer connection, const boost::system::error_code& error);
 };
 
 } // console

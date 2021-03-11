@@ -14,11 +14,11 @@ settings tag_invoke(json::value_to_tag<settings>, const json::value& jv) {
 
 using boost::asio::ip::tcp;
 
-tcp_connection::tcp_connection(tcp::socket socket)
+connection::connection(tcp::socket socket)
   : socket_(std::move(socket))
 {}
 
-void tcp_connection::send(std::string data) {
+void connection::send(std::string data) {
   bool write_in_progress = !write_queue.empty();
   write_queue.push_back(std::move(data));
 
@@ -26,12 +26,12 @@ void tcp_connection::send(std::string data) {
     do_write();
 }
 
-void tcp_connection::send_line(std::string data) {
+void connection::send_line(std::string data) {
   data += "\n";
   send(std::move(data));
 }
 
-void tcp_connection::do_write() {
+void connection::do_write() {
   auto self(shared_from_this());
   asio::async_write(socket_,
       asio::buffer(write_queue.front().data(), write_queue.front().size()),
@@ -49,13 +49,13 @@ void tcp_connection::do_write() {
 
 }
 
-void tcp_connection::on_command(const std::string& command) {
+void connection::on_command(const std::string& command) {
   std::cout << "[Console] Command: " << command << '\n';
 
   send(": ");
 }
 
-void tcp_connection::await_command() {
+void connection::await_command() {
   auto self(shared_from_this());
 
   auto handler = [this, self](const auto& error, std::size_t s) {
@@ -76,7 +76,7 @@ void tcp_connection::await_command() {
   asio::async_read_until(socket_, buffer_, "\n", handler);
 }
 
-void tcp_connection::start() {
+void connection::start() {
   std::cout << "[Console] Connection from " << socket_.remote_endpoint() << " accepted\n";
 
   send_line("HENLO");
@@ -85,7 +85,7 @@ void tcp_connection::start() {
   await_command();
 }
 
-tcp_server::tcp_server(asio::io_context& ctx, const settings& settings)
+server::server(asio::io_context& ctx, const settings& settings)
   : ctx(ctx)
   , settings_(settings)
   , acceptor(ctx, tcp::endpoint(tcp::v4(), settings_.port))
@@ -94,11 +94,11 @@ tcp_server::tcp_server(asio::io_context& ctx, const settings& settings)
     start_accept();
 }
 
-void tcp_server::start_accept() {
+void server::start_accept() {
   acceptor.async_accept(
       [this](const boost::system::error_code& error, tcp::socket socket) {
         if (!error) {
-          std::make_shared<tcp_connection>(std::move(socket))->start();
+          std::make_shared<connection>(std::move(socket))->start();
         }
 
         start_accept();
@@ -108,7 +108,7 @@ void tcp_server::start_accept() {
   std::cout << "[Console] Accepting connections on port " << settings_.port << '\n';
 }
 
-void tcp_server::handle_accept(tcp_connection::pointer connection, const boost::system::error_code& error) {
+void server::handle_accept(connection::pointer connection, const boost::system::error_code& error) {
   if (!error) {
     connection->start();
   } else {

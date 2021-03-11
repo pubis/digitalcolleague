@@ -126,7 +126,7 @@ int main(int argc, char* argv[]) {
 
   std::signal(SIGINT, signal_handler);
 
-  console::tcp_server console{ io, json::value_to<console::settings>(secret.at("console")) };
+  console::server console{ io, json::value_to<console::settings>(secret.at("console")) };
 
   asio::ssl::context ssl_ctx_discord{ asio::ssl::context::tlsv12_client };
   ssl_ctx_discord.set_default_verify_paths();
