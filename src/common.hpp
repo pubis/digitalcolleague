@@ -34,4 +34,9 @@ namespace dc {
 
   using tcp = asio::ip::tcp;
 
+  template <class T>
+    void extract(const json::object& object, T& t, json::string_view key) {
+      t = json::value_to<T>(object.at(key));
+    }
+
 } // namespace dc

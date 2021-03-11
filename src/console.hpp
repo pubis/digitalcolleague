@@ -9,11 +9,6 @@ struct settings {
   int port;
 };
 
-template <class T>
-void extract(const json::object& obj, T& t, json::string_view key) {
-  t = json::value_to<T>(obj.at(key));
-}
-
 settings tag_invoke(json::value_to_tag<settings>, const json::value& jv);
 
 using boost::asio::ip::tcp;

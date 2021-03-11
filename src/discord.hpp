@@ -22,11 +22,6 @@ struct gateway {
   session_start_limit_t session_start_limit;
 };
 
-template <class T>
-void extract(const json::object& obj, T& t, json::string_view key) {
-  t = json::value_to<T>(obj.at(key));
-}
-
 settings tag_invoke(json::value_to_tag<settings>, const json::value& jv) {
   settings s;
   const json::object& obj = jv.as_object();
