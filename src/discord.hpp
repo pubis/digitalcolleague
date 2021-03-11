@@ -66,6 +66,7 @@ class session : public std::enable_shared_from_this<session> {
   tcp::resolver resolver_;
   ws::stream<beast::ssl_stream<beast::tcp_stream>> ws_;
   beast::flat_buffer buffer_;
+  std::deque<std::string> write_queue_;
   settings settings_;
   std::string host_;
   gateway gateway_;
@@ -86,6 +87,9 @@ public:
   {}
 
   void run();
+  void connect();
+  void disconnect();
+  void reconnect();
 
   void on_resolve(beast::error_code ec, tcp::resolver::results_type results);
   void on_connect(beast::error_code ec, tcp::resolver::results_type::endpoint_type endpoint);
@@ -93,14 +97,15 @@ public:
   void on_handshake(beast::error_code ec);
   void on_read(beast::error_code ec, std::size_t bytes_transferred);
 
-  void disconnect();
-
+  void on_dispatch(const std::string& event, const json::value& data);
   void on_hello(const json::value& d);
 
   void send_heartbeat(const boost::system::error_code& ec);
   void send_identify();
+  void send_resume();
   void send(int opcode, const json::value& data);
 
+  void do_write();
   void on_write(beast::error_code ec, std::size_t bytes_transferred);
   void on_close(beast::error_code ec);
 

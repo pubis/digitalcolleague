@@ -43,11 +43,25 @@ void session::run() {
     return;
   }
 
+  connect();
+}
+
+void session::connect() {
   host_ = gateway_.url.substr(gateway_.url.find_last_of('/') + 1);
-  std::cout << "[Discord] host: " << host_ << '\n';
+  std::cout << "[Discord] Connecting to: " << host_ << '\n';
 
   resolver_.async_resolve(host_, "443",
       beast::bind_front_handler(&session::on_resolve, shared_from_this()));
+}
+
+void session::disconnect() {
+  ws_.async_close(ws::close_code::normal,
+      beast::bind_front_handler(&session::on_close, shared_from_this()));
+}
+
+void session::reconnect() {
+  disconnect();
+  connect();
 }
 
 void session::on_resolve(beast::error_code ec, tcp::resolver::results_type results) {
@@ -131,19 +145,16 @@ void session::on_read(beast::error_code ec, std::size_t bytes_transferred) {
         std::string event = json::value_to<std::string>(json_response.at("t"));
         auto data = json_response.at("d");
 
-        if (event == "READY") {
-          identified_ = true;
-          session_id_ = json::value_to<std::string>(data.at("session_id"));
-        }
-
-        std::cout << "[Discord] Dispatch event payload:\n" << data << '\n';
+        on_dispatch(event, data);
       } break;
       case OpCode::Heartbeat:
       case OpCode::Identify:
       case OpCode::PresenceUpdate:
       case OpCode::VoiceStateUpdate:
       case OpCode::Resume:
-      case OpCode::Reconnect:
+      case OpCode::Reconnect: {
+        reconnect();
+      } break;
       case OpCode::RequestGuildMembers:
       case OpCode::InvalidSession:
         std::cout << "[Discord] OpCode not implemented (" << json_response.at("op") << ")\n";
@@ -156,10 +167,6 @@ void session::on_read(beast::error_code ec, std::size_t bytes_transferred) {
         needAck_--;
         if (needAck_ < 0) {
           std::cerr << "[Discord] Received extra Heartbeat Ack\n";
-        }
-        if (!identified_) {
-          send_identify();
-          identified_ = true; // Move to Ready event
         }
       } break;
       default: {
@@ -179,9 +186,16 @@ void session::on_read(beast::error_code ec, std::size_t bytes_transferred) {
       beast::bind_front_handler(&session::on_read, shared_from_this()));
 }
 
-void session::disconnect() {
-  ws_.async_close(ws::close_code::normal,
-      beast::bind_front_handler(&session::on_close, shared_from_this()));
+void session::on_dispatch(const std::string& event, const json::value& data) {
+  if (event == "READY") {
+    identified_ = true;
+    session_id_ = json::value_to<std::string>(data.at("session_id"));
+    std::cout << "[Discord] Identified. Payload: " << data << '\n';
+  } else if (event == "RESUMED") {
+    std::cout << "[Discord] Resumed. Payload: " << data << '\n';
+  } else {
+    std::cout << "[Discord] Unhandled dispatch event `" << event << "`, payload: " << data << '\n';
+  }
 }
 
 void session::on_hello(const json::value& d) {
@@ -192,6 +206,12 @@ void session::on_hello(const json::value& d) {
 
   send_heartbeat(boost::system::errc::make_error_code(
       boost::system::errc::success));
+
+  if (!identified_) {
+    send_identify();
+  } else {
+    send_resume();
+  }
 }
 
 void session::send_heartbeat(const boost::system::error_code& ec) {
@@ -243,7 +263,20 @@ void session::send_identify() {
     { "afk", false }
   };
 
+  std::cout << "[Discord] Identifying\n";
+
   send(2, data);
+}
+
+void session::send_resume() {
+  json::object data;
+  data["token"] = settings_.token;
+  data["session_id"] = session_id_;
+  data["seq"] = sequence_;
+
+  std::cout << "[Discord] Resuming\n";
+
+  send(6, data);
 }
 
 void session::send(int opcode, const json::value& data) {
@@ -251,8 +284,16 @@ void session::send(int opcode, const json::value& data) {
   obj["op"] = opcode;
   obj["d"] = data;
 
-  std::string payload = json::serialize(obj);
-  ws_.async_write(asio::buffer(payload),
+  bool write_in_progress = !write_queue_.empty();
+
+  write_queue_.push_back(json::serialize(obj));
+
+  if (!write_in_progress)
+    do_write();
+}
+
+void session::do_write() {
+  ws_.async_write(asio::buffer(write_queue_.front()),
       beast::bind_front_handler(&session::on_write, shared_from_this()));
 }
 
@@ -261,6 +302,11 @@ void session::on_write(beast::error_code ec, std::size_t bytes_transferred) {
     std::cerr << "[Discord] Write failed: " << ec.message() << '\n';
     return;
   }
+
+  write_queue_.pop_front();
+
+  if (!write_queue_.empty())
+    do_write();
 }
 
 void session::on_close(beast::error_code ec) {
