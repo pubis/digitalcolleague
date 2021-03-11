@@ -14,8 +14,9 @@ settings tag_invoke(json::value_to_tag<settings>, const json::value& jv) {
 
 using boost::asio::ip::tcp;
 
-connection::connection(tcp::socket socket)
+connection::connection(tcp::socket socket, server* server)
   : socket_(std::move(socket))
+  , server_(server)
 {}
 
 void connection::send(std::string data) {
@@ -51,6 +52,8 @@ void connection::do_write() {
 
 void connection::on_command(const std::string& command) {
   std::cout << "[Console] Command: " << command << '\n';
+
+  server_->handle_command(command);
 
   send(": ");
 }
@@ -94,11 +97,32 @@ server::server(asio::io_context& ctx, const settings& settings)
     start_accept();
 }
 
+void server::register_handler(std::string name, command_handler handler) {
+  command_handlers_[std::move(name)].push_back(handler);
+}
+
+void server::handle_command(const std::string& command) {
+  std::string cmd;
+  std::string attr;
+
+  auto first_space = command.find_first_of(' ');
+  if (first_space == std::string::npos) {
+    cmd = command;
+  } else {
+    cmd = command.substr(0, first_space);
+    attr = command.substr(first_space + 1);
+  }
+
+  for (auto& handler: command_handlers_[cmd]) {
+    handler(attr);
+  }
+}
+
 void server::start_accept() {
   acceptor.async_accept(
       [this](const boost::system::error_code& error, tcp::socket socket) {
         if (!error) {
-          std::make_shared<connection>(std::move(socket))->start();
+          std::make_shared<connection>(std::move(socket), this)->start();
         }
 
         start_accept();
