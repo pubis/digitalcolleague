@@ -55,11 +55,15 @@ void session::connect() {
 }
 
 void session::disconnect() {
+  std::cout << "[Discord] Disconnecting\n";
+
   ws_.async_close(ws::close_code::normal,
       beast::bind_front_handler(&session::on_close, shared_from_this()));
 }
 
 void session::reconnect() {
+  std::cout << "[Discord] Reconnecting\n";
+
   disconnect();
   connect();
 }
@@ -135,6 +139,8 @@ void session::on_read(beast::error_code ec, std::size_t bytes_transferred) {
   }
 
   auto response = beast::buffers_to_string(buffer_.data());
+  buffer_.clear();
+
   try {
     auto json_response = json::parse(response);
     OpCode op = json::value_to<OpCode>(json_response.at("op"));
@@ -154,6 +160,7 @@ void session::on_read(beast::error_code ec, std::size_t bytes_transferred) {
       case OpCode::Resume:
       case OpCode::Reconnect: {
         reconnect();
+        return;
       } break;
       case OpCode::RequestGuildMembers:
       case OpCode::InvalidSession:
@@ -179,8 +186,6 @@ void session::on_read(beast::error_code ec, std::size_t bytes_transferred) {
     std::cout << "[Discord] Failed to parse response JSON: " << e.what() << '\n'
       << "Response: " << response << '\n';
   }
-
-  buffer_.clear();
 
   ws_.async_read(buffer_,
       beast::bind_front_handler(&session::on_read, shared_from_this()));
