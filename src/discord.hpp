@@ -109,6 +109,8 @@ public:
   void on_write(beast::error_code ec, std::size_t bytes_transferred);
   void on_close(beast::error_code ec);
 
+  void request(http::verb method, const std::string& endpoint, const json::object& payload);
+
 private:
   void get_gateway();
 

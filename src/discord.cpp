@@ -327,6 +327,53 @@ void session::on_close(beast::error_code ec) {
   std::cout << "[Discord] Results:\n" << beast::make_printable(buffer_.data()) << '\n';
 }
 
+void session::request(http::verb method, const std::string& endpoint, const json::object& payload) {
+  const char* host = "discord.com";
+  const char* port = "443";
+  std::string target = "/api/v8/";
+
+  tcp::resolver resolver{ io_ };
+  beast::ssl_stream<beast::tcp_stream> stream(io_, ctx_);
+
+  if (!SSL_set_tlsext_host_name(stream.native_handle(), host)) {
+    beast::error_code ec{ static_cast<int>(::ERR_get_error()), asio::error::get_ssl_category() };
+    throw beast::system_error{ ec };
+  }
+
+  auto const results = resolver.resolve(host, port);
+
+  beast::get_lowest_layer(stream).connect(results);
+
+  stream.handshake(ssl::stream_base::client);
+
+  target += endpoint;
+  http::request<http::string_body> request{ http::verb::get, target, 11 };
+  request.set(http::field::host, host);
+  request.set(http::field::user_agent, "DiscordBot (https://github.com/pubis, 0.1)");
+  request.set(http::field::authorization, "Bot " + settings_.token);
+  request.body() = json::serialize(payload);
+
+  http::write(stream, request);
+
+  beast::flat_buffer buffer;
+
+  http::response<http::string_body> response;
+
+  http::read(stream, buffer, response);
+
+  auto json_response = json::parse(response.body());
+
+  std::cout << "[Discord] Reponse: " << json_response << '\n';
+
+  beast::error_code ec;
+  stream.shutdown(ec);
+  if (ec == asio::error::eof || ec == ssl::error::stream_truncated) {
+    ec = {};
+  }
+  if (ec)
+    throw beast::system_error(ec);
+}
+
 void session::get_gateway() {
   const char* host = "discord.com";
   const char* port = "443";
