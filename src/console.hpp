@@ -4,6 +4,8 @@
 
 namespace dc {
 
+namespace console {
+
 struct settings {
   bool enabled;
   int port;
@@ -48,4 +50,6 @@ private:
   void handle_accept(tcp_connection::pointer connection, const boost::system::error_code& error);
 };
 
-}
+} // console
+
+} // dc

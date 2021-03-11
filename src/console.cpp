@@ -2,6 +2,8 @@
 
 namespace dc {
 
+namespace console {
+
 settings tag_invoke(json::value_to_tag<settings>, const json::value& jv) {
   settings s;
   const json::object& obj = jv.as_object();
@@ -116,4 +118,6 @@ void tcp_server::handle_accept(tcp_connection::pointer connection, const boost::
   start_accept();
 }
 
-}
+} // console
+
+} // dc
