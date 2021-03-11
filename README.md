@@ -19,6 +19,10 @@
     "pass": "oauth:oauth_token",
     "channels": [ "#somechannel" ]
   },
+  "discord": {
+    "enabled": true,
+    "token": "discord bot token"
+  },
   "console": {
     "enabled": true,
     "port": 6969

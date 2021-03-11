@@ -12,6 +12,7 @@
 #include <sqlite3.h>
 
 #include "irc_client.hpp"
+#include "discord.hpp"
 #include "console.hpp"
 
 namespace asio = boost::asio;
@@ -131,6 +132,15 @@ int main(int argc, char* argv[]) {
   std::signal(SIGINT, signal_handler);
 
   dc::tcp_server console{ io, json::value_to<dc::settings>(secret.at("console")) };
+
+  asio::ssl::context ssl_ctx_discord{ asio::ssl::context::tlsv12_client };
+  ssl_ctx_discord.set_default_verify_paths();
+  ssl_ctx_discord.set_verify_mode(asio::ssl::verify_peer);
+
+  std::make_shared<dc::discord::session>(
+      io, ssl_ctx_discord,
+      json::value_to<dc::discord::settings>(secret.at("discord"))
+  )->run();
 
   io.run();
 
