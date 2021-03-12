@@ -57,15 +57,15 @@ void session::connect() {
 void session::disconnect() {
   std::cout << "[Discord] Disconnecting\n";
 
-  ws_.async_close(ws::close_code::normal,
+  ws_->async_close(ws::close_code::normal,
       beast::bind_front_handler(&session::on_close, shared_from_this()));
 }
 
 void session::reconnect() {
   std::cout << "[Discord] Reconnecting\n";
 
+  reconnect_ = true;
   disconnect();
-  connect();
 }
 
 void session::on_resolve(beast::error_code ec, tcp::resolver::results_type results) {
@@ -74,9 +74,9 @@ void session::on_resolve(beast::error_code ec, tcp::resolver::results_type resul
     return;
   }
 
-  beast::get_lowest_layer(ws_).expires_after(std::chrono::seconds(30));
+  beast::get_lowest_layer(*ws_).expires_after(std::chrono::seconds(30));
 
-  beast::get_lowest_layer(ws_).async_connect(results,
+  beast::get_lowest_layer(*ws_).async_connect(results,
       beast::bind_front_handler(&session::on_connect, shared_from_this()));
 }
 
@@ -88,15 +88,15 @@ void session::on_connect(beast::error_code ec, tcp::resolver::results_type::endp
 
   host_ += ':' + std::to_string(endpoint.port());
 
-  beast::get_lowest_layer(ws_).expires_after(std::chrono::seconds(30));
+  beast::get_lowest_layer(*ws_).expires_after(std::chrono::seconds(30));
 
-  if (!SSL_set_tlsext_host_name(ws_.next_layer().native_handle(), host_.c_str())) {
+  if (!SSL_set_tlsext_host_name(ws_->next_layer().native_handle(), host_.c_str())) {
     ec = beast::error_code(static_cast<int>(::ERR_get_error()), asio::error::get_ssl_category());
     std::cerr << "[Discord] SSL Error: " << ec.message() << '\n';
     return;
   }
 
-  ws_.next_layer().async_handshake(ssl::stream_base::client,
+  ws_->next_layer().async_handshake(ssl::stream_base::client,
       beast::bind_front_handler(&session::on_ssl_handshake, shared_from_this()));
 }
 
@@ -106,17 +106,17 @@ void session::on_ssl_handshake(beast::error_code ec) {
     return;
   }
 
-  beast::get_lowest_layer(ws_).expires_never();
+  beast::get_lowest_layer(*ws_).expires_never();
 
-  ws_.set_option(ws::stream_base::timeout::suggested(beast::role_type::client));
+  ws_->set_option(ws::stream_base::timeout::suggested(beast::role_type::client));
 
-  ws_.set_option(ws::stream_base::decorator(
+  ws_->set_option(ws::stream_base::decorator(
         [](ws::request_type& req) {
           req.set(http::field::user_agent, "DiscordBot (https://github.com/pubis, 1.0)");
         }
   ));
 
-  ws_.async_handshake(host_, "/?v=6&encoding=json",
+  ws_->async_handshake(host_, "/?v=6&encoding=json",
       beast::bind_front_handler(&session::on_handshake, shared_from_this()));
 }
 
@@ -126,7 +126,7 @@ void session::on_handshake(beast::error_code ec) {
     return;
   }
 
-  ws_.async_read(buffer_,
+  ws_->async_read(buffer_,
       beast::bind_front_handler(&session::on_read, shared_from_this()));
 }
 
@@ -135,6 +135,9 @@ void session::on_read(beast::error_code ec, std::size_t bytes_transferred) {
 
   if (ec) {
     std::cerr << "[Discord] Read failed: " << ec.message() << '\n';
+    if (ec == ssl::error::stream_truncated) {
+      reconnect();
+    }
     return;
   }
 
@@ -187,7 +190,7 @@ void session::on_read(beast::error_code ec, std::size_t bytes_transferred) {
       << "Response: " << response << '\n';
   }
 
-  ws_.async_read(buffer_,
+  ws_->async_read(buffer_,
       beast::bind_front_handler(&session::on_read, shared_from_this()));
 }
 
@@ -298,7 +301,7 @@ void session::send(int opcode, const json::value& data) {
 }
 
 void session::do_write() {
-  ws_.async_write(asio::buffer(write_queue_.front()),
+  ws_->async_write(asio::buffer(write_queue_.front()),
       beast::bind_front_handler(&session::on_write, shared_from_this()));
 }
 
@@ -319,12 +322,17 @@ void session::on_close(beast::error_code ec) {
     ec = {};
   }
 
+  ws_.emplace(asio::make_strand(io_), ctx_);
+
   if (ec) {
     std::cerr << "[Discord] Close failed: " << ec.message() << '\n';
     return;
   }
 
-  std::cout << "[Discord] Results:\n" << beast::make_printable(buffer_.data()) << '\n';
+  if (reconnect_) {
+    connect();
+    reconnect_ = false;
+  }
 }
 
 void session::request(http::verb method, const std::string& endpoint, const json::object& payload) {

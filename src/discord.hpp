@@ -61,10 +61,12 @@ const int DIRECT_MESSAGE_TYPING     = 1 << 14;
 OpCode tag_invoke(json::value_to_tag<OpCode>, const json::value& jv);
 
 class session : public std::enable_shared_from_this<session> {
+  using ws_stream = ws::stream<beast::ssl_stream<beast::tcp_stream>>;
+
   asio::io_context& io_;
   ssl::context& ctx_;
   tcp::resolver resolver_;
-  ws::stream<beast::ssl_stream<beast::tcp_stream>> ws_;
+  std::optional<ws_stream> ws_;
   beast::flat_buffer buffer_;
   std::deque<std::string> write_queue_;
   settings settings_;
@@ -76,13 +78,14 @@ class session : public std::enable_shared_from_this<session> {
   std::unique_ptr<boost::asio::steady_timer> timer_;
   bool identified_{ false };
   std::string session_id_;
+  bool reconnect_{ false };
 
 public:
   explicit session(asio::io_context& io, ssl::context& ctx, const settings& s)
     : io_(io)
     , ctx_(ctx)
     , resolver_(asio::make_strand(io_))
-    , ws_(asio::make_strand(io_), ctx_)
+    , ws_(std::make_optional<ws_stream>(asio::make_strand(io), ctx_))
     , settings_(s)
   {}
 
