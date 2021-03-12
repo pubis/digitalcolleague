@@ -8,7 +8,7 @@
 #include <sqlite3.h>
 
 #include "twitch.hpp"
-#include "discord.hpp"
+#include "discord/bot.hpp"
 #include "console.hpp"
 
 using namespace dc;
@@ -132,17 +132,12 @@ int main(int argc, char* argv[]) {
   ssl_ctx_discord.set_default_verify_paths();
   ssl_ctx_discord.set_verify_mode(asio::ssl::verify_peer);
 
-  auto discord = std::make_shared<discord::session>(
-      io, ssl_ctx_discord,
-      json::value_to<discord::settings>(secret.at("discord"))
-  );
-  discord->run();
+  discord::Bot discord{ io, ssl_ctx_discord, json::value_to<discord::Settings>(secret.at("discord")) };
+  discord.run();
 
   console.register_handler("STAVSNÄS",
       [&](std::string_view attr) {
-        json::object msg;
-        msg["content"] = std::string(attr);
-        discord->request(http::verb::post, "channels/513062062885175299/messages", msg);
+        discord.createChannelMessage(513062062885175299, std::string{ attr });
       }
   );
 

@@ -8,7 +8,10 @@ find_package(SQLite3 REQUIRED)
 
 add_executable(digitalcolleague src/main.cpp
   src/twitch.hpp src/twitch.cpp
-  src/discord.hpp src/discord.cpp
+  src/discord/session.hpp src/discord/session.cpp
+  src/discord/gateway.hpp src/discord/gateway.cpp
+  src/discord/request.hpp src/discord/request.cpp
+  src/discord/bot.hpp src/discord/bot.cpp
   src/console.hpp src/console.cpp)
 
 target_compile_features(digitalcolleague PRIVATE cxx_std_17)
