@@ -160,16 +160,26 @@ void session::on_read(beast::error_code ec, std::size_t bytes_transferred) {
       case OpCode::Identify:
       case OpCode::PresenceUpdate:
       case OpCode::VoiceStateUpdate:
-      case OpCode::Resume:
+        std::cout << "[Discord] OpCode not implemented (" << json_response.at("op") << ")\n";
+        std::cout << "[Discord] Payload:\n" << json_response << '\n';
+        break;
+      case OpCode::Resume: {
+        std::cout << "[Discord] Session resumed, payload: " << json_response << '\n';
+      } break;
       case OpCode::Reconnect: {
         reconnect();
         return;
       } break;
       case OpCode::RequestGuildMembers:
-      case OpCode::InvalidSession:
         std::cout << "[Discord] OpCode not implemented (" << json_response.at("op") << ")\n";
         std::cout << "[Discord] Payload:\n" << json_response << '\n';
         break;
+      case OpCode::InvalidSession: {
+        std::cout << "[Discord] Invalid session. Reconnecting.\n";
+        identified_ = false;
+        session_id_ = "";
+        reconnect();
+      } break;
       case OpCode::Hello: {
         on_hello(json_response.at("d"));
       } break;
