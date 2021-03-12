@@ -132,10 +132,19 @@ int main(int argc, char* argv[]) {
   ssl_ctx_discord.set_default_verify_paths();
   ssl_ctx_discord.set_verify_mode(asio::ssl::verify_peer);
 
-  std::make_shared<discord::session>(
+  auto discord = std::make_shared<discord::session>(
       io, ssl_ctx_discord,
       json::value_to<discord::settings>(secret.at("discord"))
-  )->run();
+  );
+  discord->run();
+
+  console.register_handler("STAVSNÄS",
+      [&](std::string_view attr) {
+        json::object msg;
+        msg["content"] = std::string(attr);
+        discord->request(http::verb::post, "channels/513062062885175299/messages", msg);
+      }
+  );
 
   io.run();
 
