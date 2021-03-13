@@ -104,6 +104,8 @@ void Bot::onDispatch(const std::string& event, const json::value& data) {
 
 void Bot::onReconnect() {
   session->disconnect();
+
+  session = std::make_shared<Session>(io, ctx);
   session->connect(*gateway);
 }
 
@@ -113,6 +115,7 @@ void Bot::onInvalidSession() {
   session_id.clear();
   identified = false;
 
+  session = std::make_shared<Session>(io, ctx);
   session->connect(*gateway);
 }
 
