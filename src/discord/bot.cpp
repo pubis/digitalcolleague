@@ -63,7 +63,7 @@ void Bot::onSessionData(const json::value& payload) {
     case OpCode::Heartbeat: {
     } break;
     case OpCode::Reconnect: {
-      std::cout << "[Discord] Reconnect received: " << payload << '\n';
+      std::cout << "[Discord] Reconnect\n";
       onReconnect();
     } break;
     case OpCode::InvalidSession: {
