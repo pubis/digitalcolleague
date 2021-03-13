@@ -46,6 +46,8 @@ private:
   void onSessionData(const json::value& data);
 
   void onDispatch(const std::string& event, const json::value& data);
+  void onReconnect();
+  void onInvalidSession();
   void onHello(int heartbeatInterval);
   void onReady(const json::value& data);
 

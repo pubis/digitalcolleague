@@ -33,8 +33,9 @@ void Session::send(const json::object& data) {
 void Session::disconnect() {
   std::cout << "[Discord] Disconnecting\n";
 
-  ws.async_close(ws::close_code::normal,
-      beast::bind_front_handler(&Session::onClose, shared_from_this()));
+//  ws.async_close(ws::close_code::normal,
+//      beast::bind_front_handler(&Session::onClose, shared_from_this()));
+  ws.close(ws::close_code::normal);
 }
 
 

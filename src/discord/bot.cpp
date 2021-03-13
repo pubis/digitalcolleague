@@ -63,12 +63,12 @@ void Bot::onSessionData(const json::value& payload) {
     case OpCode::Heartbeat: {
     } break;
     case OpCode::Reconnect: {
-      std::cout << "[Discord] Reconnect received\n";
-      session->disconnect();
+      std::cout << "[Discord] Reconnect received: " << payload << '\n';
+      onReconnect();
     } break;
     case OpCode::InvalidSession: {
-      std::cout << "[Discord] Invalid Session received\n";
-      session->disconnect();
+      std::cout << "[Discord] Invalid Session received: " << payload << '\n';
+      onInvalidSession();
     } break;
     case OpCode::Hello: {
       onHello(json::value_to<int>(data.at("heartbeat_interval")));
@@ -100,6 +100,20 @@ void Bot::onDispatch(const std::string& event, const json::value& data) {
       std::cout << "[Discord] Unhandled dispatch event `" << event << "`, payload: " << data << '\n';
     } break;
   }
+}
+
+void Bot::onReconnect() {
+  session->disconnect();
+  session->connect(*gateway);
+}
+
+void Bot::onInvalidSession() {
+  session->disconnect();
+
+  session_id.clear();
+  identified = false;
+
+  session->connect(*gateway);
 }
 
 void Bot::onHello(int heartbeatInterval) {
