@@ -2,6 +2,7 @@
 
 #include "request.hpp"
 #include "session.hpp"
+#include "user.hpp"
 
 namespace dc {
 
@@ -28,6 +29,8 @@ class Bot {
   int needAck{ 0 };
   int sequence{ -1 };
 
+  std::optional<User> me;
+
 public:
   Bot(asio::io_context& io, ssl::context& ctx, const Settings& settings)
     : io(io)
@@ -44,6 +47,7 @@ private:
 
   void onDispatch(const std::string& event, const json::value& data);
   void onHello(int heartbeatInterval);
+  void onReady(const json::value& data);
 
   void sendHeartbeat(const boost::system::error_code& ec);
   void sendIdentify();

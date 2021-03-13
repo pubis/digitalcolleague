@@ -91,10 +91,7 @@ void Bot::onDispatch(const std::string& event, const json::value& data) {
 
   switch (static_cast<Event>(hash)) {
     case Event::Ready: {
-      identified = true;
-      session_id = json::value_to<std::string>(data.at("session_id"));
-
-      std::cout << "[Discord] Ready payload: " << data << '\n';
+      onReady(data);
     } break;
     case Event::Resumed: {
       std::cout << "[Discord] Resume payload: " << data << '\n';
@@ -118,6 +115,15 @@ void Bot::onHello(int heartbeatInterval) {
   } else {
     sendResume();
   }
+}
+
+void Bot::onReady(const json::value& data) {
+  identified = true;
+  session_id = json::value_to<std::string>(data.at("session_id"));
+
+  me = std::make_optional<User>(json::value_to<User>(data.at("user")));
+
+  std::cout << "[Discord] Identified as " << me->username << '\n';
 }
 
 void Bot::sendHeartbeat(const boost::system::error_code& ec) {
