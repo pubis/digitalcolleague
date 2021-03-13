@@ -12,6 +12,7 @@ add_executable(digitalcolleague src/main.cpp
   src/discord/gateway.hpp src/discord/gateway.cpp
   src/discord/request.hpp src/discord/request.cpp
   src/discord/snowflake.hpp src/discord/snowflake.cpp
+  src/discord/user.hpp src/discord/user.cpp
   src/discord/bot.hpp src/discord/bot.cpp src/discord/event.hpp
   src/console.hpp src/console.cpp)
 
