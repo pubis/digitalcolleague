@@ -108,8 +108,6 @@ void Session::onRead(beast::error_code ec, std::size_t bytes_transferred) {
     return;
   }
 
-  std::cout << beast::make_printable(buffer.data()) << '\n';
-
   auto response = json::parse(beast::buffers_to_string(buffer.data()));
   buffer.clear();
 
