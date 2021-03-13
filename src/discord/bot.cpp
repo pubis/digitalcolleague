@@ -1,5 +1,7 @@
 #include "bot.hpp"
 
+#include "event.hpp"
+
 namespace dc {
 
 namespace discord {
@@ -85,15 +87,21 @@ void Bot::onSessionData(const json::value& payload) {
 }
 
 void Bot::onDispatch(const std::string& event, const json::value& data) {
-  if (event == "READY") {
-    identified = true;
-    session_id = json::value_to<std::string>(data.at("session_id"));
+  auto hash = fnv1a_32(event);
 
-    std::cout << "[Discord] Identify payload: " << data << '\n';
-  } else if (event == "RESUMED") {
-    std::cout << "[Discord] Resume payload: " << data << '\n';
-  } else {
-    std::cout << "[Discord] Unhandled dispatch event `" << event << "`, payload: " << data << '\n';
+  switch (static_cast<Event>(hash)) {
+    case Event::Ready: {
+      identified = true;
+      session_id = json::value_to<std::string>(data.at("session_id"));
+
+      std::cout << "[Discord] Ready payload: " << data << '\n';
+    } break;
+    case Event::Resumed: {
+      std::cout << "[Discord] Resume payload: " << data << '\n';
+    } break;
+    default: {
+      std::cout << "[Discord] Unhandled dispatch event `" << event << "`, payload: " << data << '\n';
+    } break;
   }
 }
 
