@@ -1,4 +1,5 @@
 # DigitalColleague - A stupid bot, for twitch and discord
+You should probably not use this
 
 ## Resources
 - [Boost ASIO based IRC Client](https://github.com/KrzaQ/boost-asio-irc-client)
