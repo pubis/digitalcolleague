@@ -40,4 +40,18 @@ namespace dc {
       t = json::value_to<T>(object.at(key));
     }
 
+  template <class T>
+    void extract_maybe(const json::object& object, T& t, json::string_view key, T default_ = T()) {
+      if (object.count(key))
+        t = json::value_to<T>(object.at(key));
+      else
+        t = default_;
+    }
+
+  template <class T>
+    void extract_optional(const json::object& object, std::optional<T>& t, json::string_view key) {
+      if (!object.at(key).is_null())
+        t = std::make_optional<T>(json::value_to<T>(object.at(key)));
+    }
+
 } // namespace dc
