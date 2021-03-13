@@ -30,14 +30,13 @@ void Session::send(const json::object& data) {
     doWrite();
 }
 
-void Session::disconnect() {
+void Session::disconnect(close_callback handler) {
   std::cout << "[Discord] Disconnecting\n";
 
-  try {
-    ws.close(ws::close_code::normal);
-  } catch (const std::exception& e) {
-    std::cerr << "[Discord] Close failed: " << e.what() << '\n';
-  }
+  closeHandler = std::make_optional(handler);
+
+  ws.async_close(ws::close_code::normal,
+      beast::bind_front_handler(&Session::onClose, shared_from_this()));
 }
 
 
@@ -144,8 +143,10 @@ void Session::onClose(beast::error_code ec) {
 
   if (ec) {
     std::cerr << "[Discord] Close failed: " << ec.message() << '\n';
-    return;
   }
+
+  if (closeHandler)
+    closeHandler.value();
 }
 
 } // namespace discord

@@ -42,6 +42,7 @@ const int DIRECT_MESSAGE_TYPING     = 1 << 14;
 class Session : public std::enable_shared_from_this<Session> {
   using Stream = ws::stream<beast::ssl_stream<beast::tcp_stream>>;
   using callback = std::function<void(const json::value& data)>;
+  using close_callback = std::function<void()>;
 
   tcp::resolver resolver;
   Stream ws;
@@ -49,6 +50,7 @@ class Session : public std::enable_shared_from_this<Session> {
   std::deque<std::string> writeQueue;
   std::string host;
   callback handler;
+  std::optional<close_callback> closeHandler;
 
 public:
   explicit Session(asio::io_context& io, ssl::context& ctx)
@@ -59,7 +61,7 @@ public:
   void run(const Gateway& gateway, callback handler);
   void connect(const Gateway& gateway);
   void send(const json::object& data);
-  void disconnect();
+  void disconnect(close_callback handler);
 
 private:
   void onResolve(beast::error_code ec, tcp::resolver::results_type results);

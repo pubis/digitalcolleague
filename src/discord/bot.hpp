@@ -44,6 +44,7 @@ public:
 
 private:
   void onSessionData(const json::value& data);
+  void onDisconnect();
 
   void onDispatch(const std::string& event, const json::value& data);
   void onReconnect();
