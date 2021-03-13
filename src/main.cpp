@@ -135,12 +135,6 @@ int main(int argc, char* argv[]) {
   discord::Bot discord{ io, ssl_ctx_discord, json::value_to<discord::Settings>(secret.at("discord")) };
   discord.run();
 
-  console.register_handler("STAVSNÄS",
-      [&](std::string_view attr) {
-        discord.createChannelMessage(513062062885175299, std::string{ attr });
-      }
-  );
-
   io.run();
 
   std::cout << "Disconnected.\n";
