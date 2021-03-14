@@ -116,10 +116,12 @@ void Bot::onInvalidSession() {
 }
 
 void Bot::onDisconnect() {
+  using boost::placeholders::_1;
+
   std::cout << "[Discord] onDisconnect\n";
 
   session = std::make_shared<Session>(io, ctx);
-  session->connect(*gateway);
+  session->run(*gateway, boost::bind(&Bot::onSessionData, this, _1));
 }
 
 void Bot::onHello(int heartbeatInterval) {
