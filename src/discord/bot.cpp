@@ -103,6 +103,7 @@ void Bot::onDispatch(const std::string& event, const json::value& data) {
 }
 
 void Bot::onReconnect() {
+  heartbeat->cancel();
   session->disconnect(boost::bind(&Bot::onDisconnect, this));
 }
 
@@ -110,10 +111,13 @@ void Bot::onInvalidSession() {
   session_id.clear();
   identified = false;
 
+  heartbeat->cancel();
   session->disconnect(boost::bind(&Bot::onDisconnect, this));
 }
 
 void Bot::onDisconnect() {
+  std::cout << "[Discord] onDisconnect\n";
+
   session = std::make_shared<Session>(io, ctx);
   session->connect(*gateway);
 }
