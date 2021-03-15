@@ -39,6 +39,7 @@ public:
   {}
 
   void run();
+  void reconnect();
 
   void createChannelMessage(size_t channel, const std::string& message);
 

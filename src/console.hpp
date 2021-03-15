@@ -13,7 +13,7 @@ struct settings {
 
 settings tag_invoke(json::value_to_tag<settings>, const json::value& jv);
 
-using boost::asio::ip::tcp;
+using asio::ip::tcp;
 
 class server;
 
@@ -56,7 +56,7 @@ public:
 private:
   void start_accept();
 
-  void handle_accept(connection::pointer connection, const boost::system::error_code& error);
+  void handle_accept(connection::pointer connection, const std::error_code& error);
 };
 
 } // console

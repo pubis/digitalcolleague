@@ -7,18 +7,19 @@
 
 #include <sqlite3.h>
 
+#include <aegis.hpp>
+
 #include "twitch.hpp"
-#include "discord/bot.hpp"
 #include "console.hpp"
 
 using namespace dc;
 
-asio::io_context io;
+std::shared_ptr<asio::io_context> io{ nullptr };
 
 void signal_handler(int sig) {
   std::cout << "Caught Ctrl-C, stopping io context event loop...\n";
 
-  io.stop();
+  io->stop();
 }
 
 json::value read_json_file(const char* file, boost::system::error_code& error) {
@@ -67,7 +68,7 @@ int main(int argc, char* argv[]) {
     return EXIT_FAILURE;
   }
 
-  twitch::settings settings{ json::value_to<twitch::settings>(secret.at("twitch")) };
+  dc::twitch::settings settings{ json::value_to<dc::twitch::settings>(secret.at("twitch")) };
 
   std::cout << "SQLite threadsafe: " << sqlite3_threadsafe() << '\n';
   sqlite3 *db{ nullptr };
@@ -80,12 +81,13 @@ int main(int argc, char* argv[]) {
     std::cout << "Database: " << argv[2] << '\n';
   }
 
-  using boost::asio::ip::tcp;
+  using asio::ip::tcp;
+  io = std::make_shared<asio::io_context>();
 
   asio::ssl::context ssl_ctx{ asio::ssl::context::tls };
   ssl_ctx.set_default_verify_paths();
 
-  twitch::client twitch{ io, ssl_ctx, settings };
+  twitch::client twitch{ *io, ssl_ctx, settings };
 
   twitch.register_handler("001", [&](auto&&...) {
     for (const auto& channel: settings.channels) {
@@ -126,16 +128,24 @@ int main(int argc, char* argv[]) {
 
   std::signal(SIGINT, signal_handler);
 
-  console::server console{ io, json::value_to<console::settings>(secret.at("console")) };
+  dc::console::server console{ *io, json::value_to<dc::console::settings>(secret.at("console")) };
 
-  asio::ssl::context ssl_ctx_discord{ asio::ssl::context::tlsv12_client };
-  ssl_ctx_discord.set_default_verify_paths();
-  ssl_ctx_discord.set_verify_mode(asio::ssl::verify_peer);
+  auto token = json::value_to<std::string>(secret.at("discord").at("token"));
+  aegis::core discord(aegis::create_bot_t()
+      .log_level(spdlog::level::trace)
+      .io_context(io)
+      .token(token));
 
-  discord::Bot discord{ io, ssl_ctx_discord, json::value_to<discord::Settings>(secret.at("discord")) };
+  discord.set_on_message_create([&](aegis::gateway::events::message_create obj) {
+        std::string content{ obj.msg.get_content() };
+        auto& channel = obj.msg.get_channel();
+        auto& author = obj.msg.get_user();
+
+        std::cout << "[" << channel.get_name() << "] " << author.get_username() << ": " << content << '\n';
+      });
+
   discord.run();
-
-  io.run();
+  io->run();
 
   std::cout << "Disconnected.\n";
 

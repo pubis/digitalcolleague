@@ -28,6 +28,11 @@ void Bot::run() {
     session->run(*gateway, boost::bind(&Bot::onSessionData, this, _1));
 }
 
+void Bot::reconnect() {
+  heartbeat->cancel();
+  session->disconnect(boost::bind(&Bot::onDisconnect, this));
+}
+
 void Bot::createChannelMessage(size_t channel, const std::string& message) {
   auto request = std::make_shared<Request>(asio::make_strand(io), ctx, "discord.com", settings.token);
 
@@ -75,7 +80,7 @@ void Bot::onSessionData(const json::value& payload) {
     } break;
     case OpCode::HeartbeatAck: {
       needAck--;
-      if (needAck > 0) {
+      if (needAck < 0) {
         std::cerr << "[Discord] Received extra Heartbeat Ack\n";
       }
     } break;
@@ -103,16 +108,14 @@ void Bot::onDispatch(const std::string& event, const json::value& data) {
 }
 
 void Bot::onReconnect() {
-  heartbeat->cancel();
-  session->disconnect(boost::bind(&Bot::onDisconnect, this));
+  reconnect();
 }
 
 void Bot::onInvalidSession() {
   session_id.clear();
   identified = false;
 
-  heartbeat->cancel();
-  session->disconnect(boost::bind(&Bot::onDisconnect, this));
+  reconnect();
 }
 
 void Bot::onDisconnect() {
@@ -151,6 +154,12 @@ void Bot::onReady(const json::value& data) {
 void Bot::sendHeartbeat(const boost::system::error_code& ec) {
   if (ec) {
     std::cerr << "[Discord] Error sending heartbeat: " << ec.message() << '\n';
+  }
+
+  if (needAck > 0) {
+    std::cout << "[Discord] Unacked heartbeat, reconnecting\n";
+    reconnect();
+    return;
   }
 
   heartbeat = std::make_unique<boost::asio::steady_timer>(

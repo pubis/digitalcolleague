@@ -12,7 +12,7 @@ settings tag_invoke(json::value_to_tag<settings>, const json::value& jv) {
   return s;
 }
 
-using boost::asio::ip::tcp;
+using asio::ip::tcp;
 
 connection::connection(tcp::socket socket, server* server)
   : socket_(std::move(socket))
@@ -36,7 +36,7 @@ void connection::do_write() {
   auto self(shared_from_this());
   asio::async_write(socket_,
       asio::buffer(write_queue.front().data(), write_queue.front().size()),
-      [this, self](const boost::system::error_code& error, std::size_t /* length */) {
+      [this, self](const auto& error, std::size_t /* length */) {
         if (!error) {
           write_queue.pop_front();
           if (!write_queue.empty()) {
@@ -120,7 +120,7 @@ void server::handle_command(const std::string& command) {
 
 void server::start_accept() {
   acceptor.async_accept(
-      [this](const boost::system::error_code& error, tcp::socket socket) {
+      [this](const auto& error, tcp::socket socket) {
         if (!error) {
           std::make_shared<connection>(std::move(socket), this)->start();
         }
@@ -132,7 +132,7 @@ void server::start_accept() {
   std::cout << "[Console] Accepting connections on port " << settings_.port << '\n';
 }
 
-void server::handle_accept(connection::pointer connection, const boost::system::error_code& error) {
+void server::handle_accept(connection::pointer connection, const std::error_code& error) {
   if (!error) {
     connection->start();
   } else {

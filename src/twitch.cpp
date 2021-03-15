@@ -91,7 +91,7 @@ void client::identify() {
   std::cout << "> " << msg.str() << '\n';
 }
 
-void client::on_hostname_resolved(const boost::system::error_code& error, tcp::resolver::results_type results) {
+void client::on_hostname_resolved(const std::error_code& error, tcp::resolver::results_type results) {
   if (error) {
     connect();
     return;
@@ -104,13 +104,13 @@ void client::on_hostname_resolved(const boost::system::error_code& error, tcp::r
   }
 
   asio::async_connect(socket.lowest_layer(), results,
-      [this](const boost::system::error_code& error, const tcp::endpoint& /* endpoint */) {
+      [this](const auto& error, const tcp::endpoint& /* endpoint */) {
         on_connected(error);
       }
   );
 }
 
-void client::on_connected(const boost::system::error_code& error) {
+void client::on_connected(const std::error_code& error) {
   if (error) {
     std::cerr << "[Twitch] Connect error: " << error.message() << '\n';
     connect();
@@ -120,13 +120,13 @@ void client::on_connected(const boost::system::error_code& error) {
   std::cout << "Connected.\n";
 
   socket.async_handshake(ssl::stream_base::client,
-      [this](const boost::system::error_code& error) {
+      [this](const auto& error) {
         on_handshake(error);
       }
   );
 }
 
-void client::on_handshake(const boost::system::error_code& error) {
+void client::on_handshake(const std::error_code& error) {
   if (error) {
     std::cerr << "[Twitch] Handshake failed: " << error.message() << '\n';
     connect();
@@ -197,7 +197,7 @@ void client::send_raw() {
   );
 }
 
-void client::handle_write(const boost::system::error_code& error, std::size_t bytes_read) {
+void client::handle_write(const std::error_code& error, std::size_t bytes_read) {
   if (error) {
     std::cerr << "[Twitch] Write error: " << error << '\n';
     return;

@@ -81,15 +81,15 @@ private:
   void connect();
   void identify();
 
-  void on_hostname_resolved(const boost::system::error_code& error, tcp::resolver::results_type results);
-  void on_connected(const boost::system::error_code& error);
-  void on_handshake(const boost::system::error_code& error);
+  void on_hostname_resolved(const std::error_code& error, tcp::resolver::results_type results);
+  void on_connected(const std::error_code& error);
+  void on_handshake(const std::error_code& error);
   bool verify_certificate(bool preverified, ssl::verify_context& ctx);
   void await_new_line();
   void on_new_line(const std::string& line);
   void handle_message(std::string_view who, const std::string& type, std::string_view where, std::string_view message);
   void send_raw();
-  void handle_write(const boost::system::error_code& error, std::size_t bytes_read);
+  void handle_write(const std::error_code& error, std::size_t bytes_read);
 };
 
 } // namespace twitch
